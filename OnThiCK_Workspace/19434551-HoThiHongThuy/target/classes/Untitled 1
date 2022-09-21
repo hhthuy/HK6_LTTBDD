@@ -1,0 +1,642 @@
+create database web_product_tracker
+use web_product_tracker
+go
+CREATE TABLE [dbo].[product](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ten_sp] [varchar](50) NULL,
+	[gia_sp] [varchar](50) NULL,
+	[nhasx] [varchar](50) NULL
+	)
+go
+INSERT [dbo].[product] ([ten_sp], [gia_sp], [nhasx]) VALUES ( N'Milk', N'27000', N'vinamilk')
+INSERT [dbo].[product] ([ten_sp], [gia_sp], [nhasx]) VALUES ( N'Cake', N'15000', N'danisa')
+----------------------------------
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+@Entity
+@Table(name="customer")
+public class Customer {
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private int id;
+	@Column(name="first_name")
+	private String firstName;
+	@Column(name="last_name")
+	private String lastName;
+	@Column(name="email")
+	private String email;
+	
+-SpringMVCDispatcherServletInitializer---------------------------------------------
+public class SpringMVCDispatcherServletInitializer extends AbstractAnnotationConfigDispatcherServletInitializer{
+
+	@Override
+	protected Class<?>[] getRootConfigClasses() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected Class<?>[] getServletConfigClasses() {
+		// TODO Auto-generated method stub
+		return new Class[] {AppConfig.class};
+	}
+
+	@Override
+	protected String[] getServletMappings() {
+		// TODO Auto-generated method stub
+		return new String[] {"/"};
+	}
+-AppConfig------------------------------------------------------
+import java.beans.PropertyVetoException;
+import java.util.Properties;
+import java.util.logging.Logger;
+
+import javax.sql.DataSource;
+
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
+import org.springframework.orm.hibernate5.HibernateTransactionManager;
+import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.servlet.ViewResolver;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.view.InternalResourceViewResolver;
+
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
+@Configuration
+@EnableWebMvc
+@EnableTransactionManagement
+@ComponentScan("com")
+@PropertySource("classpath:persistence-mssql.properties")
+public class AppConfig implements WebMvcConfigurer {
+	@Autowired
+	private Environment env;
+	private Logger logger = Logger.getLogger(getClass().getName());
+
+	@Bean
+	public ViewResolver viewResolver() {
+		InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+		viewResolver.setPrefix("/WEB-INF/view/");
+		viewResolver.setSuffix(".jsp");
+		return viewResolver;
+	}
+
+	@Bean
+	public DataSource dataSource() {
+		ComboPooledDataSource myDataSource = new ComboPooledDataSource();
+		try {
+			myDataSource.setDriverClass( env.getProperty("jdbc.driver"));
+		} catch (PropertyVetoException e) {
+			throw new RuntimeException(e);
+		}
+		logger.info("jdbc.url=" + env.getProperty("jdbc.url"));
+		logger.info("jdbc.user=" + env.getProperty("jdbc.user"));
+
+		myDataSource.setJdbcUrl(env.getProperty("jdbc.url"));
+		myDataSource.setUser(env.getProperty("jdbc.user"));
+		myDataSource.setPassword(env.getProperty("jdbc.password"));
+
+		myDataSource.setInitialPoolSize(getIntProperty("connection.pool.initialPoolSize"));
+		myDataSource.setMinPoolSize(getIntProperty("connection.pool.minPoolSize"));
+		myDataSource.setMaxPoolSize(getIntProperty("connection.pool.maxPoolSize"));
+		myDataSource.setMaxIdleTime(getIntProperty("connection.pool.maxIdleTime"));
+
+		return myDataSource;
+	}
+
+	private Properties getHibernateProperties() {
+		Properties properties = new Properties();
+		properties.setProperty("hibernate.dialect", env.getProperty("hibernate.dialect"));
+		properties.setProperty("hibernate.show_sql", env.getProperty("hibernate.show_sql"));
+		return properties;
+	}
+
+	private int getIntProperty(String propName) {
+		String propVal = env.getProperty(propName);
+		int intPropVal = Integer.parseInt(propVal);
+
+		return intPropVal;
+	}
+
+	@Bean
+	public LocalSessionFactoryBean sessionFactory() {
+		LocalSessionFactoryBean sessionFactory = new LocalSessionFactoryBean();
+
+		sessionFactory.setDataSource(dataSource());
+		sessionFactory.setPackagesToScan(env.getProperty("hibernate.packagesToScan"));
+		sessionFactory.setHibernateProperties(getHibernateProperties());
+
+		return sessionFactory;
+	}
+
+	@Bean
+	@Autowired
+	public HibernateTransactionManager transactionManager(SessionFactory sessionFactory) {
+		HibernateTransactionManager transactionManager = new HibernateTransactionManager();
+		transactionManager.setSessionFactory(sessionFactory);
+		return transactionManager;
+	}
+
+	@Override
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		registry.addResourceHandler("/resources/**").addResourceLocations("/resources/**");
+	}
+
+}
+-CustomerDAO----------------------------------------------------	
+public interface CustomerDAO {
+
+	public void saveCustomer(Customer customer);
+	public void updateCustomer(Customer customer);
+	public Customer findCustomerById(int id);
+	public List<Customer> findAll();
+	public void deleteCustomer(int id);
+}
+-CustomerDAOImpl---------------------------------------------------------------
+import java.util.List;
+
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+import com.entity.Customer;
+
+@Repository
+public class CustomerDAOImpl implements CustomerDAO{
+	
+	@Autowired
+	private SessionFactory sessionFactory;
+
+	@Override
+	public void saveCustomer(Customer customer) {
+		Session session = sessionFactory.getCurrentSession();
+		session.saveOrUpdate(customer);
+		
+	}
+
+	@Override
+	public Customer findCustomerById(int id) {
+		Session session = sessionFactory.getCurrentSession();
+		String queryStr = "Select * from Customer where id ="+id;
+		Query<Customer> query = session.createNativeQuery(queryStr, Customer.class);
+		Customer customer = query.getResultStream().findFirst().orElse(null);
+		return customer;
+	}
+
+	@Override
+	public List<Customer> findAll() {
+		Session session = sessionFactory.getCurrentSession();
+		Query<Customer> query = session.createQuery("from Customer",Customer.class);
+		
+		return query.getResultList();
+	}
+
+	@Override
+	public void deleteCustomer(int id) {
+		Session session = sessionFactory.getCurrentSession();
+		Customer customer = session.get(Customer.class, id);
+		session.delete(customer);
+		
+	}
+	@Override
+	public void updateCustomer(Customer customer) {
+		Session session = sessionFactory.getCurrentSession();
+		session.update(customer);
+		
+	}
+}	
+-CustomerService-----------------------------------------------------------------
+public interface CustomerService {
+	public void saveCustomer(Customer customer);
+	public void updateCustomer(Customer customer);
+	public Customer findCustomerById(int id);
+	public List<Customer> findAll();
+	public void deleteCustomer(int id);
+	
+}
+-CustomerServiceImpl-----------------------------------------------------
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.dao.CustomerDAO;
+import com.entity.Customer;
+
+@Service
+public class CustomerServiceImpl implements CustomerService {
+
+	@Autowired
+	private CustomerDAO customerDAO;
+	
+	@Override
+	@Transactional
+	public void saveCustomer(Customer customer) {
+		customerDAO.saveCustomer(customer);
+	}
+
+	@Override
+	@Transactional
+	public Customer findCustomerById(int id) {
+		return customerDAO.findCustomerById(id);
+	}
+
+	@Override
+	@Transactional
+	public List<Customer> findAll() {
+		return customerDAO.findAll();
+	}
+
+	@Override
+	@Transactional
+	public void deleteCustomer(int id) {
+		customerDAO.deleteCustomer(id);
+	}
+	@Override
+	public void updateCustomer(Customer customer) {
+		customerDAO.updateCustomer(customer);
+		
+	}
+}
+
+-RestCustomerController----------------------------------------------------
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.service.CustomerService;
+import com.entity.Customer;
+
+@RestController
+@RequestMapping("/api")
+public class RestCustomerController {
+		@Autowired
+	private CustomerService customerService;
+
+	@GetMapping("")
+	public List<Customer> getCustomers() {
+		return customerService.findAll();
+	}
+
+	@GetMapping("/{id}")
+	public Customer getCustomerById(@PathVariable int id) {
+		return customerService.findCustomerById(id);
+	}
+
+	@PostMapping("")
+	public void saveCustomer(@RequestBody Customer customer) {
+		customerService.saveCustomer(customer);
+	}
+
+	// -- update
+	@PutMapping("")
+	public Customer updateCustomer(@RequestBody Customer customer) {
+		customerService.saveCustomer(customer);
+		return customer;
+	}
+
+	@DeleteMapping("/{id}")
+	public void deleteCustomer(@PathVariable int id) {
+		customerService.deleteCustomer(id);
+	}
+}
+-------------persistence-mssql.properties---------------------------
+server.port=8089
+#
+# JDBC connection properties
+#
+jdbc.driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
+jdbc.url=jdbc:sqlserver://localhost:1433;databaseName=web_customer_tracker
+jdbc.user=sa
+jdbc.password=sapassword
+
+#
+# Connection pool properties
+#
+connection.pool.initialPoolSize=5
+connection.pool.minPoolSize=5
+connection.pool.maxPoolSize=20
+connection.pool.maxIdleTime=3000
+
+#
+# Hibernate properties
+#
+hibernate.dialect=org.hibernate.dialect.SQLServer2012Dialect
+hibernate.show_sql=true
+hibernate.packagesToScan=com.entity
+pom---------------------------------------
+<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>11</source>
+					<target>11</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>3.3.1</version>
+				<configuration>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+  <properties>
+		<endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<springframework.version>5.2.16.RELEASE</springframework.version>
+		<springsecurity.version>5.3.11.RELEASE</springsecurity.version>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+	</properties>
+	
+	<dependencies>
+		<!-- Spring MVC support -->
+		<!-- Spring -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-orm -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-orm</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-core -->
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-core</artifactId>
+			<version>5.4.26.Final</version>
+		</dependency>
+		<!-- Spring Security -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-web</artifactId>
+			<version>${springsecurity.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-config</artifactId>
+			<version>${springsecurity.version}</version>
+		</dependency>
+		<!-- Add Spring Security Taglibs support -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-taglibs</artifactId>
+			<version>${springsecurity.version}</version>
+		</dependency>
+		<!-- Servlet, JSP and JSTL support -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet.jsp</groupId>
+			<artifactId>javax.servlet.jsp-api</artifactId>
+			<version>2.3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+			<version>1.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc -->
+		<dependency>
+			<groupId>com.microsoft.sqlserver</groupId>
+			<artifactId>mssql-jdbc</artifactId>
+			<version>8.4.1.jre11</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.mchange/c3p0 -->
+		<dependency>
+			<groupId>com.mchange</groupId>
+			<artifactId>c3p0</artifactId>
+			<version>0.9.5.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-validator</artifactId>
+			<version>6.0.20.Final</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.13.2.1</version>
+		</dependency>
+	</dependencies>
+home-----------------------------------------------
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"
+        integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn"
+        crossorigin="anonymous">
+        
+   <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="control bg-primary">
+            <h1 class="text-white text-center">Danh sách</h1>
+            <c:url var="addCustomer" value="./add-customer" />
+            <a href="${addCustomer}" class="btn btn-success ml-2 mb-2">Thêm</a>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">STT</th>
+                    <th scope="col">Id</th>
+                    <th scope="col">First Name</th>
+                    <th scope="col">Last Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                    <c:forEach items="${customers}" var="customer" varStatus="loop">
+                        <tr>
+                            <th scope="row">${loop.index}</th>
+                            <td>${customer.id}</td>
+                            <td>${customer.firstName}</td>
+                            <td>${customer.lastName}</td>
+                            <td>${customer.email}</td>
+                            <td>
+							<c:url var="updateLink" value="./${customer.id }"></c:url>
+							<c:url var="deleteLink" value="./delete/${customer.id }"></c:url>
+							
+							<a class="btn btn-primary" href="${updateLink }" role="button">Sửa</a>
+							<a class="btn btn-danger" href="${deleteLink }" role="button"
+								onclick="if(!confirm('Bạn muốn xóa hàng này?')) return false;">Xóa</a>
+						</td>
+                        </tr>
+                    </c:forEach>
+                </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
+update-------------------------------------------------
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Form Update</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"
+          integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn"
+          crossorigin="anonymous">
+</head>
+
+<body>
+<div class="container">
+    <div class="control bg-primary">
+        <h2 class="text-white text-center">Form sửa thông tin</h2>
+        <c:url var="backToHome" value="/"/>
+        <a href="${backToHome}" class="btn btn-success ml-2 mb-2">Trang chủ</a>
+    </div>
+    <div>
+        <form:form method="POST"
+                   modelAttribute="customer"
+                   action="${pageContext.request.contextPath}/${customer.id}"
+                   accept-charset="UTF-8">
+            <div class="form-group">
+                <label for="id">Mã khách hàng:</label>
+                <input type="text" class="form-control" name="id" id="id" placeholder="Id" value="${customer.id}" readonly>
+            </div>
+            <div class="form-group">
+                <label for="lastName">Họ:</label>
+                <input type="text" class="form-control" name="lastName" id="lastName" placeholder="Nhập họ" value="${customer.lastName}">
+            </div>
+            <div class="form-group">
+                <label for="firstName">Tên:</label>
+                <input type="text" class="form-control" name="firstName" id="firstName" placeholder="Nhập tên:" value="${customer.firstName}">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="text" class="form-control" name="email" id="email" placeholder="Nhập email" value="${customer.email}">
+            </div>
+            <button type="submit" class="btn btn-primary">Sửa</button>
+        </form:form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
+-add----------------------------------
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Form thêm </title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"
+          integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn"
+          crossorigin="anonymous">
+</head>
+
+<body>
+<div class="container">
+    <div class="control bg-primary">
+        <h2 class="text-white text-center">Form thêm khách hàng</h2>
+        <c:url var="backToHome" value="/"/>
+        <a href="${backToHome}" class="btn btn-success ml-2 mb-2">Trang chủ</a>
+    </div>
+    <div>
+        <form:form method="POST"
+                   modelAttribute="customer"
+                   action="${pageContext.request.contextPath}/add-customer"
+                   accept-charset="UTF-8">
+            <div class="form-group">
+                <label for="firstName">Họ:</label>
+                <input type="text" class="form-control" name="firstName" id="firstName" placeholder="Nhập họ">
+            </div>
+            <div class="form-group">
+                <label for="lastName">Tên:</label>
+                <input type="text" class="form-control" name="lastName" id="lastName" placeholder="Nhập tên:">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="text" class="form-control" name="email" id="email" placeholder="Nhập email">
+            </div>
+            <button type="submit" class="btn btn-primary">Thêm</button>
+        </form:form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
+
+
+
+	

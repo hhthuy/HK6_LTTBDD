@@ -1,0 +1,8 @@
+*****Website giới thiệu, bán bánh kẹo/socola trực tuyến*****
+SpringBoot
+Run sql: webCandyScrip.sql
+Run code:
+src/main/resources/application.properties --> sa/sapassword
+File WebCandyApplication --> Run Application
+localhost:8080/admin --> Đăng nhâp tài khoản admin: admin/admin
+localhost:8080/user --> Đăng nhập tài khoản user: tin/1234

@@ -1,0 +1,55 @@
+THI CK WWW: 
+--------------------------------------------------------------------------------------------------
+****** Dung JSP, Spring MVC, Spring REST, Hibernate, SQL Server giải quyết các yêu cầu của đề bài.
+****** It nhất 1 chức năng ở Spring MVC chạy (Chức năng này có kết nối Spring REST)
+--------------------------------------------------------------------------------------------------
+CẤU HÌNH
+--------------------------------------------------------------------------------------------------
+1.	MỞ PORT: SQL Server 2019 Configuration Manager
+2.	MỞ SQL SERVER
+3.	DOWNLOAD TOMCAT: 
+https://tomcat.apache.org/download-80.cgi
+32-bit/64-bit Windows Service Installer (pgp, sha512)
+Bước 1: 
+Mở Apache  YES  Next  Agree 
+Select the type of install: Full  v Next
+Server Shutdown Port: 8005
+HTTP/1.1 Connect Port: 8080
+ẠP/1.3 Connect Port: 8009
+Username: admin
+Password: admin
+Bước 2: 
+This PC  Manager  Services  Tomcat  Automatic
+
+4. 	ESCLIP
+  Window > Refrence > Runtime Environments > Apache/ Apache Tomcat v9.0 > Next > Browse: T:\Program Files\Apache Software Foundation\Tomcat  > Finish > OK
+Nếu không làm theo cách trên, mà chạy link Tomcat trong Server Console thì bị lỗi  Chọn: 
+Right-click project -> properties -> Project Facets -> Runtimes -> checked "Apache Tomcat v9.0" -> Apply -> finish.
+
+5. 	POSTMAN
+POST-Add--> Post>Body>raw>Json>Nhập>Send
+GET-Read
+PUT-Update/id--> Post>Body>raw>Json>Nhập>Send
+DELETE-delete/id--> Post>Body>raw>Json>Nhập>Send
+
+--------------------------------------------------------------------------------------------------
+CODE: 
+» 1. pom.xml file
+» 2. src/main/rescource > persistence-mssql.properties
+» 3. config > SpringMVCDispatcherServletInitializer > AppConfig
+» 4. entity >  Customer
+» 5. dao > CustomerDao > CustomersDaoImpl
+» 6. service > CustomerService > CustomerServiceImpl
+» 7. Rest > CustomerRestController
+>> 8. Controller
+>> jsp
+
+--> Click right project > Run > Run server
+
+---------ERROR-----------------
+JSP file [/WEB-INF/viewhome.jsp] not found --> AppConfig > viewResolver.setPrefix("/WEB-INF/view/");
+nhớ "taglib"
+@Tablename("...")
+public Product getProductById(@PathVariable int id)
+/WEB-INF/view/home.jsp (line: [39], column: [4]) According to TLD or attribute directive in tag file, attribute [items] does not accept any expressions -->taglib
+
