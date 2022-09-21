@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy package &apos;com.se.springboot.demo.app.rest&apos; to &apos;properties-demo/src/main/java&apos;&#x0D;&#x0A;- Original project: &apos;demo-01_demo-01&apos;&#x0D;&#x0A;- Destination element: &apos;properties-demo/src/main/java&apos;&#x0D;&#x0A;- Original element: &apos;demo-01_demo-01/src/main/java/com.se.springboot.demo.app.rest&apos;" description="Copy package" destination="=properties-demo/src\/main\/java=/optional=/true=/=/maven.pomderived=/true=/" element1="/src\/main\/java=/optional=/true=/=/maven.pomderived=/true=/&lt;com.se.springboot.demo.app.rest" flags="589830" fragments="1" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyPackages" stamp="1650892435090" version="1.0"/>
+</session>

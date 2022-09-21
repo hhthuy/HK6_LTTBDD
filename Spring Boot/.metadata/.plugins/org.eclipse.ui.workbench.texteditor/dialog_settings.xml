@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
+		<item key="selection" value="tempHoaDon"/>
+		<item key="wrap" value="true"/>
+		<item key="casesensitive" value="false"/>
+		<item key="wholeword" value="false"/>
+		<item key="incremental" value="false"/>
+		<item key="isRegEx" value="false"/>
+		<list key="findhistory">
+			<item value="tempHoaDon"/>
+			<item value="chitiet"/>
+			<item value="hoadonId"/>
+			<item value="HoaDonBanHang"/>
+			<item value="listHoaDon"/>
+			<item value="register"/>
+			<item value="save"/>
+			<item value="timkiem"/>
+			<item value="tempNguoiDung"/>
+			<item value="maLoaiSP"/>
+			<item value="istHoaDon"/>
+			<item value="maKH"/>
+			<item value="nguoidungs"/>
+			<item value="nguoidung"/>
+			<item value="theKhachHangs"/>
+		</list>
+		<list key="replacehistory">
+			<item value="chitiethoadonId"/>
+			<item value="ChiTietHDBanHang"/>
+			<item value="tempHoaDon"/>
+			<item value="maHD"/>
+			<item value="listHoaDon"/>
+			<item value="hoadon"/>
+			<item value="Hoa"/>
+			<item value="HoaDon"/>
+			<item value="hóa đơn"/>
+			<item value="tempOders"/>
+			<item value="maHoaDon"/>
+			<item value="tableHoaDon"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
+		<item key="DIALOG_X_ORIGIN" value="42"/>
+		<item key="DIALOG_Y_ORIGIN" value="242"/>
+		<item key="DIALOG_WIDTH" value="322"/>
+		<item key="DIALOG_HEIGHT" value="387"/>
+		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>
+	</section>
+</section>

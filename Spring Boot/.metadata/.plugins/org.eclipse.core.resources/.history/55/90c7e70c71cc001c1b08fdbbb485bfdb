@@ -1,0 +1,9 @@
+package com.se.thymeleafdemohelloworld.dao;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.se.springbootcruddemo.entity.Employee;
+
+public interface EmpolyeeRepository extends JpaRepository<Employee, Integer>{
+//JpaRepository<Employee, Integer>:Entity:Employee, Primary key:Integer --> Methods: findById(), save()..
+}
